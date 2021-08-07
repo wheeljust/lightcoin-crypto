@@ -2,12 +2,15 @@ class Account {
 
   constructor(username) {
     this.username = username;
-    this.balance = 0;
     this.transactions = [];
   }
 
   get balance () {
-    return this.transactions.reduce((total, current) => total + current, 0);
+    let balance = 0;
+    for (const t of this.transactions){
+      balance += t.value;
+    }
+    return balance;
   }
 
   addTransaction(transaction){
@@ -24,7 +27,11 @@ class Transaction {
   }
 
   commit() {
-    this.account.balance += this.value;
+    if (!this.isAllowed()) return false;
+
+    this.time = new Date();
+    this.account.addTransaction(this);
+    return true;
   }
 
 }
@@ -33,11 +40,21 @@ class Deposit extends Transaction {
   get value () {
     return this.amount;
   }
+
+  isAllowed() {
+    return true;
+  }
 }
 
 class Withdrawal extends Transaction {
   get value () {
     return -this.amount;
+  }
+
+  isAllowed() {
+    if (this.account.balance + this.value >= 0) return true;
+    console.log(`Withdrawl of $${this.amount} failed. Insufficient Funds.`)
+    return false;
   }
 }
 
@@ -51,15 +68,11 @@ console.log('Starting Balance', myAccount.balance);
 
 t1 = new Deposit(120.00, myAccount);
 t1.commit();
-// console.log('Transaction 1:', t1);
 
 t2 = new Withdrawal(50, myAccount);
 t2.commit();
-// console.log('Transaction 2:', t2);
 
 t3 = new Withdrawal(10, myAccount);
 t3.commit();
-// console.log('Transaction 3:', t3);
-
 
 console.log('Ending Balance:', myAccount.balance);
